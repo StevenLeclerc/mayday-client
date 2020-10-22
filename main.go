@@ -15,7 +15,7 @@ import (
 
 func main() {
 	logger := crunchyTools.FetchLogger()
-	logger.Info.Println("MayDay Client - v1.0.0")
+	logger.Info.Println("MayDay Client - v1.0.1")
 	var chanLog chan messageQueue.MessageQueue
 	chanLog = make(chan messageQueue.MessageQueue)
 	queueH := services.FetchQueueHandler()
@@ -31,6 +31,9 @@ func main() {
 	gracefulHandler()
 }
 
+//run should be launched once within a routine.
+// It will prepare all the information needed by the api.
+// Then, listen the Log chan, received the raw, inject some metadata and push it to the inner queuing system
 func run(chanLog chan messageQueue.MessageQueue, id int8) {
 	appConf := config.FetchAppConfig()
 	hostname, errHost := os.Hostname()

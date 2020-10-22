@@ -12,6 +12,7 @@ import (
 	crunchyTools "github.com/crunchy-apps/crunchy-tools"
 )
 
+//TODO RETRYING SYSTEM, OTHERWISE ALL LOGS CAN BE LOST IF API DO NO RESPOND
 func SendLog(logs []logType.Log) {
 	logger := crunchyTools.FetchLogger()
 	if logs != nil {
@@ -24,13 +25,12 @@ func SendLog(logs []logType.Log) {
 			r, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log", appConfig.ServerURL), strings.NewReader(string(logJson)))
 			r.Close = true
 			r.Header.Add("API_KEY", appConfig.APIKey)
-			r.Header.Add("Content-Length", string(rune(len(string(logJson))+200000)))
 			res, errDo := clientHttp.Do(r)
 			crunchyTools.HasError(errDo, "Client-MayDay - Do Request", false)
 			res.Body.Close()
 			logger.Info.Printf("[SendLog] Status: %s\n", res.Status)
 		}
 	} else {
-		logger.Warn.Printf("[SendLog] Empty PayloadHMAC\n")
+		logger.Warn.Printf("[SendLog] No Logs to send.\n")
 	}
 }

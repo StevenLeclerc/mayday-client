@@ -2,7 +2,6 @@ package services
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -13,7 +12,9 @@ import (
 	crunchyTools "github.com/crunchy-apps/crunchy-tools"
 )
 
-//TODO USE other method than open file... too much cpu consumption
+//ReadFile will, depend on logConfig, read and push all the file to mayday backend via the inner queuing system,
+// Then, it will check if the file has been modified (every 1 second).
+//In this case, everything will be push in the inner queuing system
 func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.LogConfig) {
 	file, errOpen := os.Open(logConfig.LogFilePath)
 	defer file.Close()
@@ -28,18 +29,15 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 		readAllFile(file, chanLog, logConfig)
 	}
 
-	tiktok := time.Tick(1 * time.Second)
-	for _ = range tiktok {
+	readTimer := time.Tick(1 * time.Second)
+	for _ = range readTimer {
 		actualFileSize := getStatOfFile(logConfig.LogFilePath).Size()
 		if lastFileSize < actualFileSize {
-			fmt.Println("Old", lastFileSize)
-			fmt.Println("Actual", actualFileSize)
 			buf := make([]byte, actualFileSize-lastFileSize)
 			_, errReadAt := file.ReadAt(buf, lastFileSize)
 			_ = crunchyTools.HasError(errReadAt, "FileCore - ReadFile - ReadAt", true)
 			bufString := string(buf)
 			bufStrings := strings.Split(bufString, "\n")
-			fmt.Println(bufStrings)
 			for _, log := range bufStrings {
 				if log != "\n" && log != "" {
 					pushToChan(chanLog, log, logConfig)
