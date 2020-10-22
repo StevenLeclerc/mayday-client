@@ -1,0 +1,62 @@
+package services
+
+import (
+	"time"
+
+	logType "github.com/StevenLeclerc/mayday-client/types/log"
+	crunchyTools "github.com/crunchy-apps/crunchy-tools"
+)
+
+type QueueHandler struct {
+	ChanMessage chan logType.Log
+	Queue       []logType.Log
+	Status      bool
+}
+
+var queueHandler QueueHandler
+
+func FetchQueueHandler() QueueHandler {
+	if !queueHandler.Status {
+		queueHandler.ChanMessage = make(chan logType.Log)
+		queueHandler.Status = true
+	}
+	return queueHandler
+}
+
+func (receiver *QueueHandler) InsertPostMessage(log logType.Log) {
+	receiver.ChanMessage <- log
+	return
+}
+
+func (receiver *QueueHandler) Supervisor() {
+	logger := crunchyTools.FetchLogger()
+	logger.Info.Println("[Supervisor] Started!")
+	for logFetch := range receiver.ChanMessage {
+		if len(receiver.Queue) >= 1000 {
+			SendLog(receiver.Queue)
+			receiver.Queue = []logType.Log{}
+		}
+		receiver.Queue = append(receiver.Queue, logFetch)
+	}
+}
+
+func (receiver *QueueHandler) WakeUpQueue() {
+	logger := crunchyTools.FetchLogger()
+	logger.Info.Println("[WakeUpQueue] Started!")
+
+	for {
+		countQueue := len(receiver.Queue)
+		time.Sleep(time.Second * 1)
+		if countQueue > 0 && countQueue == len(receiver.Queue) {
+			logger.Info.Printf("[WakeUpQueue] Clean needed for: %d messages\n", countQueue)
+			SendLog(receiver.Queue)
+			receiver.Queue = []logType.Log{}
+		}
+	}
+}
+func (receiver *QueueHandler) ForceSendMessages() {
+	countQueue := len(receiver.Queue)
+	logger := crunchyTools.FetchLogger()
+	logger.Info.Printf("[ForceSendMessages] %d messages pushed\n", countQueue)
+	SendLog(receiver.Queue)
+}
