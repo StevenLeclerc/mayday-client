@@ -16,3 +16,11 @@ func FetchAppConfig() configLogType.AppConfig {
 	crunchyTools.HasError(errUnMarshal, "config - FetchAppConfig - UnMarshal", false)
 	return appConfig
 }
+
+//Debug Will print debug a formatted message if AppConfig.Debug is true
+func Debug(message string) {
+	if FetchAppConfig().Debug {
+		logger := crunchyTools.FetchLogger()
+		logger.Warn.Printf("[DEBUG]%s", message)
+	}
+}

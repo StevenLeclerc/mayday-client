@@ -25,6 +25,7 @@ func SendLog(logs []logType.Log) {
 			r, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log", appConfig.ServerURL), strings.NewReader(string(logJson)))
 			r.Close = true
 			r.Header.Add("API_KEY", appConfig.APIKey)
+			config.Debug(fmt.Sprintf("[SendLog] headers used: %s", r.Header))
 			res, errDo := clientHttp.Do(r)
 			crunchyTools.HasError(errDo, "Client-MayDay - Do Request", false)
 			res.Body.Close()

@@ -3,6 +3,7 @@ package services
 import (
 	"time"
 
+	"github.com/StevenLeclerc/mayday-client/config"
 	logType "github.com/StevenLeclerc/mayday-client/types/log"
 	crunchyTools "github.com/crunchy-apps/crunchy-tools"
 )
@@ -36,24 +37,25 @@ func (receiver *QueueHandler) Supervisor() {
 	logger.Info.Println("[Supervisor] Started!")
 	for logFetch := range receiver.ChanMessage {
 		if len(receiver.Queue) >= 1000 {
+			config.Debug("[Supervisor] Queue reach 1000 elements")
 			SendLog(receiver.Queue)
 			receiver.Queue = []logType.Log{}
+			config.Debug("[Supervisor] Queue Cleaned")
 		}
+		config.Debug("[Supervisor] Append message to Queue")
 		receiver.Queue = append(receiver.Queue, logFetch)
 	}
 }
 
 //WakeUpQueue should be launched once within a go routine.
-// It will check every second if the number of log pushed in Log chan is the same or not.
-// If the number is still the same between two ticks, it will clean the queue by sending to the api the stuck logs
+// It will send logs within the queue every x seconds
 func (receiver *QueueHandler) WakeUpQueue() {
 	logger := crunchyTools.FetchLogger()
 	logger.Info.Println("[WakeUpQueue] Started!")
-
 	for {
+		time.Sleep(time.Second * 2)
 		countQueue := len(receiver.Queue)
-		time.Sleep(time.Second * 1)
-		if countQueue > 0 && countQueue == len(receiver.Queue) {
+		if countQueue > 0 {
 			logger.Info.Printf("[WakeUpQueue] Clean needed for: %d messages\n", countQueue)
 			SendLog(receiver.Queue)
 			receiver.Queue = []logType.Log{}

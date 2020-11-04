@@ -1,20 +1,21 @@
 {
   "apiKey": "12345abcdss",
   "defaultHostname": "Tester",
+  "debug": false,
   "serverUrl": "localhost:4545",
   "logConfigs": [
     {
       "logFilePath": "./keep-alive.log",
       "channels": [
-        "5f82148bc21f9ac0bb6ae822"
+        "5f7c6546512391f317c3f5a3"
       ],
-      "logAllFile": true,
+      "logAllFile": false,
       "category": "keep-alive"
     },
     {
       "logFilePath": "./bhrick3.log",
       "channels": [
-        "5f82148bc21f9ac0bb6ae822"
+        "5f7c6546512391f317c3f5a3"
       ],
       "logAllFile": false,
       "category": "bhricks"

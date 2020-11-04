@@ -13,15 +13,17 @@ import (
 	crunchyTools "github.com/crunchy-apps/crunchy-tools"
 )
 
+//TODO Add to config.json the log threshold
 func main() {
 	logger := crunchyTools.FetchLogger()
-	logger.Info.Println("MayDay Client - v1.0.1")
+	logger.Info.Println("MayDay Client - v1.1.0")
+
 	var chanLog chan messageQueue.MessageQueue
 	chanLog = make(chan messageQueue.MessageQueue)
 	queueH := services.FetchQueueHandler()
+
 	go queueH.Supervisor()
 	go queueH.WakeUpQueue()
-
 	go run(chanLog, 0)
 
 	appConfig := config.FetchAppConfig()
@@ -44,16 +46,17 @@ func run(chanLog chan messageQueue.MessageQueue, id int8) {
 	if errHost != nil {
 		hostname = "NoHostFound"
 	}
+
+	queueH := services.FetchQueueHandler()
 	for log := range chanLog {
 		logToPush := logType.Log{
-			Message:        log.Message,
-			Hostname:       hostname,
-			Channels:       log.Channels,
-			LoggedAt:       time.Now(),
-			FetchLogApiKey: appConf.APIKey,
-			Category:       log.Category,
+			Message:          log.Message,
+			Hostname:         hostname,
+			Channels:         log.Channels,
+			LoggedAt:         time.Now(),
+			LogFetcherApiKey: appConf.APIKey,
+			Category:         log.Category,
 		}
-		queueH := services.FetchQueueHandler()
 		queueH.InsertPostMessage(logToPush)
 	}
 }

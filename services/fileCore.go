@@ -2,11 +2,13 @@ package services
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/StevenLeclerc/mayday-client/config"
 	configLogType "github.com/StevenLeclerc/mayday-client/types/configLog"
 	"github.com/StevenLeclerc/mayday-client/types/messageQueue"
 	crunchyTools "github.com/crunchy-apps/crunchy-tools"
@@ -31,8 +33,10 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 
 	readTimer := time.Tick(1 * time.Second)
 	for _ = range readTimer {
+		config.Debug("[FileCore] Checking File...")
 		actualFileSize := getStatOfFile(logConfig.LogFilePath).Size()
 		if lastFileSize < actualFileSize {
+			config.Debug("[FileCore] File changed")
 			buf := make([]byte, actualFileSize-lastFileSize)
 			_, errReadAt := file.ReadAt(buf, lastFileSize)
 			_ = crunchyTools.HasError(errReadAt, "FileCore - ReadFile - ReadAt", true)
@@ -40,6 +44,7 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 			bufStrings := strings.Split(bufString, "\n")
 			for _, log := range bufStrings {
 				if log != "\n" && log != "" {
+					config.Debug(fmt.Sprintf("[FileCore] Message %s inserted to queue", log))
 					pushToChan(chanLog, log, logConfig)
 				}
 			}
@@ -65,6 +70,7 @@ func getStatOfFile(filePath string) os.FileInfo {
 func readAllFile(file *os.File, chanLog chan messageQueue.MessageQueue, logConfig configLogType.LogConfig) {
 	reader := bufio.NewReader(file)
 	logger := crunchyTools.FetchLogger()
+	config.Debug(fmt.Sprintf("[FileCore][readAllFile] activated for %s", logConfig.LogFilePath))
 	for {
 		line, errRead := reader.ReadString('\n')
 		if errRead != nil {

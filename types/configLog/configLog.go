@@ -2,6 +2,7 @@ package configLogType
 
 type AppConfig struct {
 	APIKey          string      `json:"apiKey"`
+	Debug           bool        `json:"debug"`
 	ServerURL       string      `json:"serverUrl"`
 	DefaultHostname string      `json:"defaultHostname"`
 	LogConfigs      []LogConfig `json:"logConfigs"`
