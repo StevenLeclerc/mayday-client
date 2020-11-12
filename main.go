@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -14,22 +15,29 @@ import (
 )
 
 //TODO Add to config.json the log threshold
+//TODO add % of file if logAllFile is set
 func main() {
 	logger := crunchyTools.FetchLogger()
-	logger.Info.Println("MayDay Client - v1.1.0")
+	logger.Info.Println("MayDay Client - v1.2.0")
 
 	var chanLog chan messageQueue.MessageQueue
+	var chanApiIsOnline chan bool
 	chanLog = make(chan messageQueue.MessageQueue)
+	chanApiIsOnline = make(chan bool)
 	queueH := services.FetchQueueHandler()
+	var readerMutexes []*sync.Mutex
 
-	go queueH.Supervisor()
-	go queueH.WakeUpQueue()
+	go queueH.Supervisor(chanApiIsOnline)
+	go queueH.WakeUpQueue(chanApiIsOnline)
 	go run(chanLog, 0)
 
 	appConfig := config.FetchAppConfig()
-	for _, logConfig := range appConfig.LogConfigs {
-		go services.ReadFile(chanLog, logConfig)
+	for index, logConfig := range appConfig.LogConfigs {
+		var mutex sync.Mutex
+		readerMutexes = append(readerMutexes, &mutex)
+		go services.ReadFile(chanLog, logConfig, readerMutexes[index])
 	}
+	go services.Stabilizer(chanApiIsOnline, readerMutexes)
 	gracefulHandler()
 }
 

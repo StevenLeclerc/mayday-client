@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/StevenLeclerc/mayday-client/config"
@@ -17,14 +18,17 @@ import (
 //ReadFile will, depend on logConfig, read and push all the file to mayday backend via the inner queuing system,
 // Then, it will check if the file has been modified (every 1 second).
 //In this case, everything will be push in the inner queuing system
-func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.LogConfig) {
+//If the file have been rotated or cleaned, a recursive call will be executed and the initial routine will be closed,
+func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.LogConfig, readerMutex *sync.Mutex) {
+	logger := crunchyTools.FetchLogger()
+	logger.Info.Printf("[FileCore] Start treating: %s\n", logConfig.LogFilePath)
+	//reloadFileTimer := time.Tick(60 * time.Second)
+
 	file, errOpen := os.Open(logConfig.LogFilePath)
 	defer file.Close()
 	if errOpen != nil {
 		crunchyTools.HasError(errOpen, "[FileCore]", false)
 	}
-	logger := crunchyTools.FetchLogger()
-	logger.Info.Printf("[FileCore] Start treating: %s\n", logConfig.LogFilePath)
 
 	lastFileSize := getStatOfFile(logConfig.LogFilePath).Size()
 	if logConfig.LogAllFile {
@@ -33,8 +37,14 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 
 	readTimer := time.Tick(1 * time.Second)
 	for _ = range readTimer {
-		config.Debug("[FileCore] Checking File...")
 		actualFileSize := getStatOfFile(logConfig.LogFilePath).Size()
+		readerMutex.Lock()
+		config.Debug("[FileCore] Checking File...")
+		if actualFileSize < lastFileSize {
+			logger.Warn.Printf("[FileCore] File rotated or cleaned, restart routine for: %s\n", logConfig.LogFilePath)
+			go ReadFile(chanLog, logConfig, readerMutex)
+			break
+		}
 		if lastFileSize < actualFileSize {
 			config.Debug("[FileCore] File changed")
 			buf := make([]byte, actualFileSize-lastFileSize)
@@ -50,7 +60,10 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 			}
 			lastFileSize = actualFileSize
 		}
+		readerMutex.Unlock()
 	}
+	readerMutex.Unlock()
+	logger.Warn.Printf("[FileCore] Routine closed for: %s\n", logConfig.LogFilePath)
 }
 
 func pushToChan(chanLog chan messageQueue.MessageQueue, lastLine string, logConfig configLogType.LogConfig) {

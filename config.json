@@ -1,8 +1,8 @@
 {
   "apiKey": "12345abcdss",
   "defaultHostname": "Tester",
-  "debug": false,
-  "serverUrl": "localhost:4545",
+  "debug": true,
+  "serverUrl": "http://localhost:4545",
   "logConfigs": [
     {
       "logFilePath": "./keep-alive.log",
