@@ -30,8 +30,12 @@ func SendLog(logs []logType.Log) bool {
 			if errDo != nil {
 				return false
 			}
+			defer res.Body.Close()
+			if !strings.Contains(res.Status, "200") {
+				logger.Warn.Printf("[SendLog] Status: %s\n", res.Status)
+				return false
+			}
 			logger.Info.Printf("[SendLog] Status: %s\n", res.Status)
-			res.Body.Close()
 			return true
 		}
 	} else {
