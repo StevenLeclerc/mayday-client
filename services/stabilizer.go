@@ -7,7 +7,7 @@ import (
 	crunchyTools "github.com/crunchy-apps/crunchy-tools"
 )
 
-//Stabilizer will listn to chanApi, this chan will received false if any problem occurs during the http.post
+//Stabilizer will listen to chanApi, this chan will received false if any problem occurs during the http.post
 //in this case, the Stabilizer will block all file readers, set Queue.Paused to true then set the retrying process.
 func Stabilizer(chanApi chan bool, readerMutexes []*sync.Mutex) {
 	logger := crunchyTools.FetchLogger()
