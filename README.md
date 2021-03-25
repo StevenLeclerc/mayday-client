@@ -1,4 +1,4 @@
-### MayDay-Client v1.1.0
+### MayDay-Client v1.2.2
 
 ... is the client used by system ops to send log to mayday-core
 
@@ -36,10 +36,11 @@ The config.json must be formatted like that :
 
 ```
 
-The `apiKey` is provided within mayday frontend, under the logFetcher creation process.
-Mayday-Client will use the ops hostname, but ou can force one by setting the field: `defaultHostname`
-The `serverUrl` is by default to mayday official servers, but you can set your own mayday backend url.
-The `debug` mode set to false by default.
-`logConfigs` is an array of config, they should indicate the absolute path to the log file (`logFilePath`) and within which
-`channels` the log should be inserted. The `channels` are created within the mayday interface.
-At last, you can decide to send all the content of the log file by setting true to `logAllFile`. Otherwise, only new inserted line will be sent.
+The `apiKey` is provided within mayday frontend, under the logFetcher creation process. Mayday-Client will use the ops
+hostname, but ou can force one by setting the field: `defaultHostname`
+The `serverUrl` is by default to mayday official servers, but you can set your own mayday backend url. The `debug` mode
+set to false by default.
+`logConfigs` is an array of config, they should indicate the absolute path to the log file (`logFilePath`) and within
+which
+`channels` the log should be inserted. The `channels` are created within the mayday interface. At last, you can decide
+to send all the content of the log file by setting true to `logAllFile`. Otherwise, only new inserted line will be sent.
