@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -32,7 +31,6 @@ func Stabilizer(chanApi chan bool, readerMutexes []*sync.Mutex) {
 func IsMutexLocked(m *sync.Mutex) bool {
 	const mutexLocked = 1
 	state := reflect.ValueOf(m).Elem().FieldByName("state")
-	fmt.Println("Lock State: ", state)
 	return state.Int()&mutexLocked == mutexLocked
 }
 

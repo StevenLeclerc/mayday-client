@@ -18,7 +18,7 @@ import (
 //TODO add % of file if logAllFile is set
 func main() {
 	logger := crunchyTools.FetchLogger()
-	logger.Info.Println("MayDay Client - v1.2.2")
+	logger.Info.Println("MayDay Client - v1.2.4")
 
 	var chanLog chan messageQueue.MessageQueue
 	var chanApiIsOnline chan bool
