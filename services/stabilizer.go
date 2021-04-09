@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -26,6 +28,14 @@ func Stabilizer(chanApi chan bool, readerMutexes []*sync.Mutex) {
 	}
 }
 
+//isMutexLocked check if the mutex is locked or not, using reflection
+func IsMutexLocked(m *sync.Mutex) bool {
+	const mutexLocked = 1
+	state := reflect.ValueOf(m).Elem().FieldByName("state")
+	fmt.Println("Lock State: ", state)
+	return state.Int()&mutexLocked == mutexLocked
+}
+
 //RetryingSendQueue will be triggered by the Stabilizer. It will retry every n seconds (default 10) to push the queue.
 //If it succeed, it will unlock file readers. And set the Queue.Paused to false.
 func RetryingSendQueue(readerMutexes []*sync.Mutex) {
@@ -38,7 +48,9 @@ func RetryingSendQueue(readerMutexes []*sync.Mutex) {
 			logger.Warn.Println("[Stabilizer][RetryingSendQueue] Queue Sent.")
 			logger.Warn.Println("[Stabilizer][RetryingSendQueue] Unlocking File Readers...")
 			for _, mutex := range readerMutexes {
-				mutex.Unlock()
+				if IsMutexLocked(mutex) {
+					mutex.Unlock()
+				}
 			}
 			logger.Warn.Println("[Stabilizer][RetryingSendQueue] Unlocking File Readers Done.")
 			queueHandler.Paused = false

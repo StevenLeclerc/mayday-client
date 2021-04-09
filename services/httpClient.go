@@ -20,7 +20,7 @@ func SendLog(logs []logType.Log) bool {
 		crunchyTools.HasError(errJson, "Client-MayDay - JsonUnMarshal", true)
 		if errJson == nil {
 			clientHttp := http.DefaultClient
-			clientHttp.Timeout = time.Minute + 10
+			clientHttp.Timeout = time.Second + 10
 			r, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/log", appConfig.ServerURL), strings.NewReader(string(logJson)))
 			r.Close = true
 			r.Header.Add("API_KEY", appConfig.APIKey)

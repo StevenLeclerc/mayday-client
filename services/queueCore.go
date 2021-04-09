@@ -40,7 +40,7 @@ func (receiver *QueueHandler) Supervisor(chanApiIsOnline chan bool) {
 	for logFetch := range receiver.ChanMessage {
 		if len(receiver.Queue) >= 1000 && receiver.Paused == false {
 			config.Debug("[Supervisor] Queue reach 1000 elements")
-			if !SendLog(receiver.Queue) {
+			if !SendLog(receiver.Queue) && receiver.Paused == false {
 				logger.Warn.Printf("[Supervisor] API Problem, sending state to Stabilizer.")
 				chanApiIsOnline <- false
 			} else {
@@ -64,7 +64,7 @@ func (receiver *QueueHandler) WakeUpQueue(chanApiIsOnline chan bool) {
 		countQueue := len(receiver.Queue)
 		if countQueue > 0 && receiver.Paused == false {
 			logger.Info.Printf("[WakeUpQueue] Clean needed for: %d messages\n", countQueue)
-			if !SendLog(receiver.Queue) {
+			if !SendLog(receiver.Queue) && receiver.Paused == false {
 				logger.Warn.Printf("[WakeUpQueue] API Problem, sending state to Stabilizer.")
 				chanApiIsOnline <- false
 			} else {

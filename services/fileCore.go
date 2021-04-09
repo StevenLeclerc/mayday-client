@@ -22,7 +22,6 @@ import (
 func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.LogConfig, readerMutex *sync.Mutex) {
 	logger := crunchyTools.FetchLogger()
 	logger.Info.Printf("[FileCore] Start treating: %s\n", logConfig.LogFilePath)
-	//reloadFileTimer := time.Tick(60 * time.Second)
 
 	file, errOpen := os.Open(logConfig.LogFilePath)
 	defer file.Close()
@@ -32,7 +31,7 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 
 	lastFileSize := getStatOfFile(logConfig.LogFilePath).Size()
 	if logConfig.LogAllFile {
-		readAllFile(file, chanLog, logConfig)
+		readAllFile(file, chanLog, logConfig, readerMutex)
 	}
 
 	readTimer := time.Tick(1 * time.Second)
@@ -42,6 +41,9 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 		config.Debug("[FileCore] Checking File...")
 		if actualFileSize < lastFileSize {
 			logger.Warn.Printf("[FileCore] File rotated or cleaned, restart routine for: %s\n", logConfig.LogFilePath)
+			if IsMutexLocked(readerMutex) {
+				readerMutex.Unlock()
+			}
 			go ReadFile(chanLog, logConfig, readerMutex)
 			break
 		}
@@ -60,9 +62,10 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 			}
 			lastFileSize = actualFileSize
 		}
-		readerMutex.Unlock()
+		if IsMutexLocked(readerMutex) {
+			readerMutex.Unlock()
+		}
 	}
-	readerMutex.Unlock()
 	logger.Warn.Printf("[FileCore] Routine closed for: %s\n", logConfig.LogFilePath)
 }
 
@@ -80,17 +83,24 @@ func getStatOfFile(filePath string) os.FileInfo {
 	return stat
 }
 
-func readAllFile(file *os.File, chanLog chan messageQueue.MessageQueue, logConfig configLogType.LogConfig) {
+func readAllFile(file *os.File, chanLog chan messageQueue.MessageQueue, logConfig configLogType.LogConfig, readerMutex *sync.Mutex) {
 	reader := bufio.NewReader(file)
 	logger := crunchyTools.FetchLogger()
 	config.Debug(fmt.Sprintf("[FileCore][readAllFile] activated for %s", logConfig.LogFilePath))
 	for {
+		readerMutex.Lock()
 		line, errRead := reader.ReadString('\n')
 		if errRead != nil {
 			if errRead == io.EOF {
 				logger.Info.Printf("[FileCore] LogAllFile '%s' Done...\n", logConfig.LogFilePath)
 			}
+			if IsMutexLocked(readerMutex) {
+				readerMutex.Unlock()
+			}
 			break
+		}
+		if IsMutexLocked(readerMutex) {
+			readerMutex.Unlock()
 		}
 		pushToChan(chanLog, line, logConfig)
 	}
