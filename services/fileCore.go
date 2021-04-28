@@ -34,7 +34,7 @@ func ReadFile(chanLog chan messageQueue.MessageQueue, logConfig configLogType.Lo
 		readAllFile(file, chanLog, logConfig, readerMutex)
 	}
 
-	readTimer := time.Tick(1 * time.Second)
+	readTimer := time.Tick(10 * time.Second)
 	for _ = range readTimer {
 		actualFileSize := getStatOfFile(logConfig.LogFilePath).Size()
 		readerMutex.Lock()
