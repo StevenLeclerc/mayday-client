@@ -1,4 +1,4 @@
-### MayDay-Client v1.2.2
+### MayDay-Client v1.2.5
 
 ... is the client used by system ops to send log to mayday-core
 
